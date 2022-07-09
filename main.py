@@ -1,26 +1,15 @@
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import numpy as np
 from math import pi, cos, sin
-#import networkx as nx
+import png
 
-n = 1000
 
-A = np.random.rand(n,n)
-A = A / np.transpose(A.sum(axis=0)[:,None])
-print(A)
+f = png.Reader('gato.png')
+pngdata = f.asDirect()
+image_2d = np.vstack(map(np.uint16, pngdata[2]))
+#w.write(f, s)
 
-w, vl = np.linalg.eig(A)
-autovet = vl[:, np.argmax(w)]
+image_2d = np.transpose(image_2d)
 
-#print(autovet)
-#print(A.dot(autovet))
-
-pos_x = []
-pos_y = []
-
-for i in range(n):
-    pos_x.append(cos(2 * pi * i / n))
-    pos_y.append(sin(2 * pi * i / n))
-    
-plt.scatter(pos_x, pos_y, c = autovet)
-plt.savefig("out.png")
+plt.imsave('test2.png', (image_2d), cmap=cm.gray)
