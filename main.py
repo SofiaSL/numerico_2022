@@ -4,22 +4,33 @@ import numpy as np
 from math import pi, cos, sin
 import png
 
+def qr_algo(A):
+    n = 100
+    L = A
+    Q = np.identity(A.shape[0])
+    for i in range(n):
+        q, r = np.linalg.qr(L)
+        L = r @ q
+        Q = q
+    return L,  Q
 
 f = png.Reader('gato.png')
 pngdata = f.asDirect()
 image_2d = np.vstack(map(np.uint16, pngdata[2]))
 #w.write(f, s)
 
-image_2d = image_2d / 256
+#L = qr_algo(image_2d)
 
-u,s,v = np.linalg.svd(image_2d)
+#print(L)
 
-k = 200
+for i in range(2048):
+    for j in range(2048):
+        image_2d[j,i] = image_2d[i,j]
+        
+L , Q = qr_algo(image_2d/256)
 
-u = u[:,0:k]
-s = np.diag(s[0:k])
-v = v[0:k,:]
+compress = 256 * (np.transpose(Q) @ L @ Q)
 
-image_2d = 256* u @ s @ v
+print(image_2d - compress)
 
-plt.imsave('gato2.png', (image_2d), cmap=cm.gray)
+plt.imsave('gato3.png', (compress), cmap=cm.gray)
