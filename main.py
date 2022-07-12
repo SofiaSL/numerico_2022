@@ -56,7 +56,7 @@ def svd(A, k, tol=1e-10):
             matriz_1d -= valor_singular * np.outer(u, v)
 
         if n > m:
-            v = svd_1d(matriz_1d, tol)              # proximo vetor singular
+            v = svd_1d(matriz_1d, tol)  # proximo vetor singular
             u0 = np.dot(A, v)
             sigma = np.linalg.norm(u0)  # proximo valor singular
             u = u0 / sigma              # normalizar o vetor
