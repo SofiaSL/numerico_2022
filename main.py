@@ -4,13 +4,27 @@ import numpy as np
 from numpy.linalg import norm
 from math import pi, cos, sin, sqrt
 import png
+<<<<<<< HEAD
 from random import normalvariate
+=======
+
+def qr_algo(A):
+    n = 100
+    L = A
+    Q = np.identity(A.shape[0])
+    for i in range(n):
+        q, r = np.linalg.qr(L)
+        L = r @ q
+        Q = q
+    return L,  Q
+>>>>>>> b51cb487982ed619f1b9d7a9710aeecceadf4c09
 
 f = png.Reader('gato.png')
 pngdata = f.asDirect()
 image_2d = np.vstack(map(np.uint16, pngdata[2]))
 #w.write(f, s)
 
+<<<<<<< HEAD
 #image_2d = np.transpose(image_2d)
 
 def randomUnitVector(n):
@@ -84,3 +98,20 @@ p,q,r=svd(image_2d,k=100)
 A = q@np.diag(p)@r
 
 plt.imsave('out.png', A, cmap=cm.gray)
+=======
+#L = qr_algo(image_2d)
+
+#print(L)
+
+for i in range(2048):
+    for j in range(2048):
+        image_2d[j,i] = image_2d[i,j]
+        
+L , Q = qr_algo(image_2d/256)
+
+compress = 256 * (np.transpose(Q) @ L @ Q)
+
+print(image_2d - compress)
+
+plt.imsave('gato3.png', (compress), cmap=cm.gray)
+>>>>>>> b51cb487982ed619f1b9d7a9710aeecceadf4c09
