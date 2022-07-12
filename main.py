@@ -15,7 +15,7 @@ image_2d = np.vstack(list(pngdata[2]))
 # vetor unitario aleatorio com distribuicao uniforme
 # gerado usando uma distribuicao uniforme em [0,1]^n e normalizando
 def vetor_aleatorio(n):
-    vec = [normalvariate(0, 1) for _ in range(n)]
+    vec = [normalvariate(0, 1) for i in range(n)]
     norma = sqrt(sum(x * x for x in vec))
     return [x / norma for x in vec]
 
@@ -32,6 +32,8 @@ def svd_1d(A, tol):
     else:
         B = np.dot(A, A.T)
 
+    # iterar a operacao  v -> (B v) / ||B v ||  ate chegar na condicao de convergencia
+    # o vetor inicial é aleatorio
     while abs(np.dot(prox_vec, vec)) < 1 - tol:
         vec = prox_vec
         prox_vec = np.dot(B, vec)
@@ -50,18 +52,20 @@ def svd(A, k, tol=1e-10):
 
     # cada iteracao do loop adiciona um valor singular e aumenta em 1 o tamanho das matrizes
     for i in range(k):
-        matriz_1d = A.copy()
+        matriz_anterior = A.copy() # essa eh a matriz com k-1 valores singulares que aproxima A
 
+        # calculando a matriz anterior
         for valor_singular, u, v in out[:i]:
-            matriz_1d -= valor_singular * np.outer(u, v)
+            matriz_anterior -= valor_singular * np.outer(u, v)
 
+        # calculando a SVD em uma dimensao e acrescentando a proxima aproximacao
         if n > m:
-            v = svd_1d(matriz_1d, tol)  # proximo vetor singular
+            v = svd_1d(matriz_anterior, tol)  # proximo vetor singular
             u0 = np.dot(A, v)
             sigma = np.linalg.norm(u0)  # proximo valor singular
             u = u0 / sigma              # normalizar o vetor
         else:
-            u = svd_1d(matriz_1d, tol) 
+            u = svd_1d(matriz_anterior, tol) 
             v = np.dot(A.T, u)
             sigma = np.linalg.norm(v)
             v_normalizado = v / sigma
