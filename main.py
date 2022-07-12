@@ -24,23 +24,20 @@ def vetor_aleatorio(n):
 def svd_1d(A, tol):
 
     n, m = A.shape
-    lastV = None
-    currentV = vetor_aleatorio(min(n,m))
+    vec = np.zeros(min(n,m))
+    prox_vec = vetor_aleatorio(min(n,m))
 
     if n > m:
         B = np.dot(A.T, A)
     else:
         B = np.dot(A, A.T)
 
-    lastV = currentV
-    currentV = np.dot(B, lastV)
-    currentV = currentV / np.linalg.norm(currentV)
-    while abs(np.dot(currentV, lastV)) < 1 - tol:
-        lastV = currentV
-        currentV = np.dot(B, lastV)
-        currentV = currentV / np.linalg.norm(currentV)
+    while abs(np.dot(prox_vec, vec)) < 1 - tol:
+        vec = prox_vec
+        prox_vec = np.dot(B, vec)
+        prox_vec = prox_vec / np.linalg.norm(prox_vec)
 
-    return currentV
+    return prox_vec
 
 
 # decomposicao SVD da matriz A
@@ -49,29 +46,30 @@ def svd_1d(A, tol):
 def svd(A, k, tol=1e-10):
     A = np.array(A, dtype=float)
     n, m = A.shape
-    svdSoFar = []
+    out = [] # lista com as matrizes unitarias e os valores singulares
 
+    # cada iteracao do loop adiciona um valor singular e aumenta em 1 o tamanho das matrizes
     for i in range(k):
         matriz_1d = A.copy()
 
-        for valor_singular, u, v in svdSoFar[:i]:
+        for valor_singular, u, v in out[:i]:
             matriz_1d -= valor_singular * np.outer(u, v)
 
         if n > m:
-            v = svd_1d(matriz_1d, tol)  # proximo vetor singular
-            u_unnormalized = np.dot(A, v)
-            sigma = np.linalg.norm(u_unnormalized)  # proximo valor singular
-            u = u_unnormalized / sigma
+            v = svd_1d(matriz_1d, tol)              # proximo vetor singular
+            u0 = np.dot(A, v)
+            sigma = np.linalg.norm(u0)  # proximo valor singular
+            u = u0 / sigma              # normalizar o vetor
         else:
             u = svd_1d(matriz_1d, tol) 
             v = np.dot(A.T, u)
             sigma = np.linalg.norm(v)
             v_normalizado = v / sigma
 
-        svdSoFar.append((sigma, u, v_normalizado))
+        out.append((sigma, u, v_normalizado))
 
-    singularValues, us, vs = [np.array(x) for x in zip(*svdSoFar)]
-    return singularValues, us.T, vs
+    val_sing, us, vs = [np.array(x) for x in zip(*out)]
+    return val_sing, us.T, vs
 
 p,q,r=svd(image_2d, 20)
 
