@@ -24,25 +24,23 @@ def vetor_aleatorio(n):
 def svd_1d(A, tol):
 
     n, m = A.shape
-    x = vetor_aleatorio(min(n,m))
     lastV = None
-    currentV = x
+    currentV = vetor_aleatorio(min(n,m))
 
     if n > m:
         B = np.dot(A.T, A)
     else:
         B = np.dot(A, A.T)
 
-    iterations = 0
-    while True:
-        iterations += 1
+    lastV = currentV
+    currentV = np.dot(B, lastV)
+    currentV = currentV / np.linalg.norm(currentV)
+    while abs(np.dot(currentV, lastV)) < 1 - tol:
         lastV = currentV
         currentV = np.dot(B, lastV)
         currentV = currentV / np.linalg.norm(currentV)
 
-        if abs(np.dot(currentV, lastV)) > 1 - tol:
-            print("converged in {} iterations!".format(iterations))
-            return currentV
+    return currentV
 
 
 # decomposicao SVD da matriz A
@@ -66,11 +64,11 @@ def svd(A, k, tol=1e-10):
             u = u_unnormalized / sigma
         else:
             u = svd_1d(matriz_1d, tol) 
-            v_unnormalized = np.dot(A.T, u)
-            sigma = np.linalg.norm(v_unnormalized)
-            v = v_unnormalized / sigma
+            v = np.dot(A.T, u)
+            sigma = np.linalg.norm(v)
+            v_normalizado = v / sigma
 
-        svdSoFar.append((sigma, u, v))
+        svdSoFar.append((sigma, u, v_normalizado))
 
     singularValues, us, vs = [np.array(x) for x in zip(*svdSoFar)]
     return singularValues, us.T, vs
