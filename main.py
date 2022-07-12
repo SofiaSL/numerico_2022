@@ -8,79 +8,54 @@ from random import normalvariate
 
 f = png.Reader('gato.png')
 pngdata = f.asDirect()
+
+# matriz cujas entradas correspondem ao tom de cinza de cada pixel da imagem
 image_2d = np.vstack(map(np.uint16, pngdata[2]))
-#w.write(f, s)
-
-#image_2d = np.transpose(image_2d)
-
-def randomUnitVector(n):
-    unnormalized = [normalvariate(0, 1) for _ in range(n)]
-    theNorm = sqrt(sum(x * x for x in unnormalized))
-    return [x / theNorm for x in unnormalized]
 
 
-def svd_1d(A, epsilon=1e-10):
-    ''' The one-dimensional SVD '''
+# base ortonormal para a matriz
+# baseada na decomposiao QR do numpy
+def base_orto(M):
+    Q, _ = np.linalg.qr(M)
+    return Q
 
-    n, m = A.shape
-    x = randomUnitVector(min(n,m))
-    lastV = None
-    currentV = x
 
-    if n > m:
-        B = np.dot(A.T, A)
+def iter_subspaco(A, Y0, n_iters):
+    Q = base_orto(Y0)
+    for i in range(n_iters):
+        Z = base_orto(A.T @ Q)
+        Q = base_orto(A @ Z)
+    return Q
+
+
+def find_range(A, n_samples, n_subspace_iters=None):
+    m, n = A.shape
+    O = np.random.randn(n, n_samples)
+    Y = A @ O
+
+    if n_subspace_iters:
+        return iter_subspaco(A, Y, n_subspace_iters)
     else:
-        B = np.dot(A, A.T)
+        return base_orto(Y)
 
-    iterations = 0
-    while True:
-        iterations += 1
-        lastV = currentV
-        currentV = np.dot(B, lastV)
-        currentV = currentV / norm(currentV)
+def svd(A, rank, n_subspace_iters=None):
+    n_samples = 2 * rank
 
-        if abs(np.dot(currentV, lastV)) > 1 - epsilon:
-            print("converged in {} iterations!".format(iterations))
-            return currentV
+    # estagio A.
+    Q = find_range(A, n_samples, n_subspace_iters)
 
+    # estagio B.
+    B = Q.T @ A
+    U_tilde, S, Vt = np.linalg.svd(B)
+    U = Q @ U_tilde
 
-def svd(A, k=None, epsilon=1e-10):
-    '''
-        Compute the singular value decomposition of a matrix A
-        using the power method. A is the input matrix, and k
-        is the number of singular values you wish to compute.
-        If k is None, this computes the full-rank decomposition.
-    '''
-    A = np.array(A, dtype=float)
-    n, m = A.shape
-    svdSoFar = []
-    if k is None:
-        k = min(n, m)
+    # truncar
+    U, S, Vt = U[:, :rank], S[:rank], Vt[:rank, :]
 
-    for i in range(k):
-        matrixFor1D = A.copy()
+    return U, S, Vt
 
-        for singularValue, u, v in svdSoFar[:i]:
-            matrixFor1D -= singularValue * np.outer(u, v)
+p,q,r=svd(image_2d,rank=100)
 
-        if n > m:
-            v = svd_1d(matrixFor1D, epsilon=epsilon)  # next singular vector
-            u_unnormalized = np.dot(A, v)
-            sigma = norm(u_unnormalized)  # next singular value
-            u = u_unnormalized / sigma
-        else:
-            u = svd_1d(matrixFor1D, epsilon=epsilon)  # next singular vector
-            v_unnormalized = np.dot(A.T, u)
-            sigma = norm(v_unnormalized)  # next singular value
-            v = v_unnormalized / sigma
-
-        svdSoFar.append((sigma, u, v))
-
-    singularValues, us, vs = [np.array(x) for x in zip(*svdSoFar)]
-    return singularValues, us.T, vs
-
-p,q,r=svd(image_2d,k=100)
-
-A = q@np.diag(p)@r
+A = p@np.diag(q)@r
 
 plt.imsave('out.png', A, cmap=cm.gray)
